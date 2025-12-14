@@ -128,46 +128,23 @@ with st.expander("Add Game", expanded=True):
             st.success("Game added!")
             st.rerun()
 
-
-# === CSV IMPORT — FIXED (case-insensitive column check) ===
-# === CSV IMPORT — FULLY CASE-INSENSITIVE & FIXED ===
-# st.download_button("Download CSV Template", data="opponent_rating,result\n1800,0.5\n1800,0.5\n", file_name="fide_template.csv", mime="text/csv")
+# === CSV IMPORT ===
+st.download_button("Download CSV Template", data="opponent_rating,result\n1800,0.5\n1800,0.5\n", file_name="fide_template.csv", mime="text/csv")
 
 uploaded = st.file_uploader("Upload CSV (will replace current games)", type=["csv"])
 if uploaded:
     try:
         df = pd.read_csv(uploaded)
-        
-        # Create a mapping from lowercased column names to actual
-        col_map = {}
-        for col in df.columns:
-            lower_col = col.strip().lower().replace(" ", "_")
-            if "rating" in lower_col:
-                col_map["opponent_rating"] = col
-            if "result" in lower_col:
-                col_map["result"] = col
-        
-        if "opponent_rating" not in col_map or "result" not in col_map:
-            st.error("CSV must have columns containing 'rating' and 'result' (e.g., opponent_rating, result)")
+        if {"opponent_rating", "result"}.issubset(set(df.columns.str.lower())):
+            df = df.rename(columns=str.lower)
+            df["Opponent Rating"] = df["opponent_rating"].astype(int)
+            df["Result"] = df["result"].astype(str)
+            st.session_state.games = df[["Opponent Rating", "Result"]].copy()
+            st.success(f"Imported {len(df)} games!")
         else:
-            # Use the actual column names
-            rating_col = col_map["opponent_rating"]
-            result_col = col_map["result"]
-            
-            df[rating_col] = pd.to_numeric(df[rating_col], errors='coerce')
-            df = df.dropna(subset=[rating_col])
-            df[rating_col] = df[rating_col].astype(int)
-            df[result_col] = df[result_col].astype(str).str.strip()
-            
-            st.session_state.games = pd.DataFrame({
-                "Opponent Rating": df[rating_col],
-                "Result": df[result_col]
-            }).reset_index(drop=True)
-            
-            st.success(f"Successfully imported {len(df)} games!")
-            st.rerun()
+            st.error("CSV must have: opponent_rating, result")
     except Exception as e:
-        st.error(f"Error reading CSV: {e}")
+        st.error(f"Error: {e}")
 
 # === EDITABLE TABLE ===
 st.subheader(f"Your Games ({len(st.session_state.games)})")
