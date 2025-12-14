@@ -57,35 +57,73 @@ def calculate_rating(opponents, results):
 # ====================== PDF GENERATOR ======================
 def generate_pdf(data, name):
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=1.5*inch)
+    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=1.5*inch, bottomMargin=1*inch)
     styles = getSampleStyleSheet()
     story = []
-    story.append(Paragraph("FIDE Initial Rating Certificate",
-                          ParagraphStyle('Title', parent=styles['Title'], fontSize=36, alignment=1, spaceAfter=60, textColor="#003087")))
-    story.append(Paragraph(f"<b>{name or 'Chess Player'}</b>", ParagraphStyle('Name', fontSize=28, alignment=1, spaceAfter=40)))
-    story.append(Paragraph(f"<font size=90><b>{data['rating']}</b></font>",
-                          ParagraphStyle('Rating', alignment=1, textColor="#003087")))
-    story.append(Paragraph("First Official FIDE Rating", ParagraphStyle('Sub', fontSize=22, alignment=1, spaceAfter=60)))
 
-    t = Table([
+    # Title
+    story.append(Paragraph("FIDE Initial Rating Certificate",
+                          ParagraphStyle('CustomTitle',
+                                         parent=styles['Title'],
+                                         fontSize=36,
+                                         alignment=1,
+                                         spaceAfter=60,
+                                         textColor="#003087")))
+
+    # Player Name
+    story.append(Paragraph(f"<b>{name or 'Chess Player'}</b>",
+                          ParagraphStyle('CustomName',
+                                         fontSize=28,
+                                         alignment=1,
+                                         spaceAfter=40)))
+
+    # Big Rating Number
+    story.append(Paragraph(f"<font size=90><b>{data['rating']}</b></font>",
+                          ParagraphStyle('CustomRating',
+                                         alignment=1,
+                                         textColor="#003087",
+                                         spaceAfter=60)))
+
+    # Subtitle
+    story.append(Paragraph("First Official FIDE Rating",
+                          ParagraphStyle('CustomSub',
+                                         fontSize=22,
+                                         alignment=1,
+                                         spaceAfter=60)))
+
+    # Stats Table
+    table_data = [
         ["Games Played", str(data['games'])],
         ["Average Opponent", str(data['avg'])],
         ["Score", f"{data['score']}/{data['games']} ({data['perc']}%)"],
         ["Performance Rating", str(data['Rp'])],
         ["Date", datetime.now().strftime("%B %d, %Y")],
-    ], colWidths=[3.8*inch, 2.8*inch])
+    ]
+    t = Table(table_data, colWidths=[3.8*inch, 2.8*inch])
     t.setStyle(TableStyle([
-        ('BACKGROUND',(0,0),(-1,0),"#003087"), ('TEXTCOLOR',(0,0),(-1,0),colors.white),
-        ('GRID',(0,0),(-1,-1),2,colors.lightgrey), ('BACKGROUND',(0,1),(-1,-1),"#f0f8ff"),
-        ('FONTSIZE',(0,0),(-1,-1),16), ('LEFTPADDING',(0,0),(-1,-1),30),
+        ('BACKGROUND', (0,0), (-1,0), "#003087"),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+        ('GRID', (0,0), (-1,-1), 2, colors.lightgrey),
+        ('BACKGROUND', (0,1), (-1,-1), "#f0f8ff"),
+        ('FONTSIZE', (0,0), (-1,-1), 16),
+        ('LEFTPADDING', (0,0), (-1,-1), 30),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
     ]))
     story.append(t)
+
     story.append(Spacer(1, 60))
-    story.append(Paragraph("Per FIDE Rating Regulations 2025", ParagraphStyle('Footer', alignment=1, fontSize=14, textColor="#555")))
+
+    # Footer
+    story.append(Paragraph("Calculated per FIDE Rating Regulations 2025",
+                          ParagraphStyle('CustomFooter',
+                                         alignment=1,
+                                         fontSize=14,
+                                         textColor="#555",
+                                         spaceBefore=20)))
+
     doc.build(story)
     buffer.seek(0)
     return buffer
-
 # ====================== STREAMLIT APP ======================
 st.set_page_config(page_title="FIDE Rating Pro", page_icon="Trophy", layout="centered")
 
