@@ -129,20 +129,28 @@ with st.expander("Add Game", expanded=True):
             st.rerun()
 
 # === CSV IMPORT ===
+# === CSV IMPORT — FIXED (case-insensitive column check) ===
 st.download_button("Download CSV Template", data="opponent_rating,result\n1800,0.5\n1800,0.5\n", file_name="fide_template.csv", mime="text/csv")
 
 uploaded = st.file_uploader("Upload CSV (will replace current games)", type=["csv"])
 if uploaded:
     try:
         df = pd.read_csv(uploaded)
-        if {"opponent_rating", "result"}.issubset(set(df.columns.str.lower())):
+        
+        # Normalize columns for matching: strip spaces, lowercase
+        normalized_columns = set(col.strip().lower() for col in df.columns)
+        
+        if {"opponent_rating", "result"}.issubset(normalized_columns):
+            # Rename to standard names (case-insensitive mapping)
             df = df.rename(columns=str.lower)
+            df = df.rename(columns=lambda x: x.strip())  # extra strip if needed
+            
             df["Opponent Rating"] = df["opponent_rating"].astype(int)
             df["Result"] = df["result"].astype(str)
             st.session_state.games = df[["Opponent Rating", "Result"]].copy()
             st.success(f"Imported {len(df)} games!")
         else:
-            st.error("CSV must have: opponent_rating, result")
+            st.error("CSV must have columns: opponent_rating and result (case-insensitive)")
     except Exception as e:
         st.error(f"Error: {e}")
 
