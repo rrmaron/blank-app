@@ -129,46 +129,23 @@ with st.expander("Add Game", expanded=True):
             st.rerun()
 
 # === CSV IMPORT ===
-# === CSV IMPORT — SUPER FLEXIBLE & FIXED ===
 st.download_button("Download CSV Template", data="opponent_rating,result\n1800,0.5\n1800,0.5\n", file_name="fide_template.csv", mime="text/csv")
 
 uploaded = st.file_uploader("Upload CSV (will replace current games)", type=["csv"])
 if uploaded:
     try:
         df = pd.read_csv(uploaded)
-        
-        # Normalize column names: lower case, strip spaces, replace spaces with underscore
-        df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
-        
-        # Find columns that match rating and result (flexible matching)
-        rating_col = None
-        result_col = None
-        for col in df.columns:
-            if "rating" in col:
-                rating_col = col
-            if "result" in col:
-                result_col = col
-        
-        if rating_col is None or result_col is None:
-            st.error("CSV must have columns containing 'rating' and 'result' (e.g., opponent_rating, result)")
+        if {"opponent_rating", "result"}.issubset(set(df.columns.str.lower())):
+            df = df.rename(columns=str.lower)
+            df["Opponent Rating"] = df["opponent_rating"].astype(int)
+            df["Result"] = df["result"].astype(str)
+            st.session_state.games = df[["Opponent Rating", "Result"]].copy()
+            st.success(f"Imported {len(df)} games!")
         else:
-            # Convert and clean
-            df[rating_col] = pd.to_numeric(df[rating_col], errors='coerce')
-            df = df.dropna(subset=[rating_col])
-            df[rating_col] = df[rating_col].astype(int)
-            df[result_col] = df[result_col].astype(str).str.strip()
-            
-            # Update session state
-            st.session_state.games = pd.DataFrame({
-                "Opponent Rating": df[rating_col],
-                "Result": df[result_col]
-            }).reset_index(drop=True)
-            
-            st.success(f"Successfully imported {len(df)} games!")
-            st.rerun()
+            st.error("CSV must have: opponent_rating, result")
     except Exception as e:
-        st.error(f"Error reading CSV: {e}")
-        
+        st.error(f"Error: {e}")
+
 # === EDITABLE TABLE ===
 st.subheader(f"Your Games ({len(st.session_state.games)})")
 edited = st.data_editor(
