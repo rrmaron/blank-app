@@ -128,8 +128,9 @@ with st.expander("Add Game", expanded=True):
             st.success("Game added!")
             st.rerun()
 
-# === CSV IMPORT ===
+
 # === CSV IMPORT — FIXED (case-insensitive column check) ===
+# === CSV IMPORT — FULLY FLEXIBLE (spaces, underscores, mixed case) ===
 st.download_button("Download CSV Template", data="opponent_rating,result\n1800,0.5\n1800,0.5\n", file_name="fide_template.csv", mime="text/csv")
 
 uploaded = st.file_uploader("Upload CSV (will replace current games)", type=["csv"])
@@ -137,22 +138,42 @@ if uploaded:
     try:
         df = pd.read_csv(uploaded)
         
-        # Normalize columns for matching: strip spaces, lowercase
-        normalized_columns = set(col.strip().lower() for col in df.columns)
+        # Normalize column names for matching: lower case, remove spaces and underscores
+        normalized_cols = {col.strip().lower().replace(" ", "").replace("_", ""): col for col in df.columns}
         
-        if {"opponent_rating", "result"}.issubset(normalized_columns):
-            # Rename to standard names (case-insensitive mapping)
-            df = df.rename(columns=str.lower)
-            df = df.rename(columns=lambda x: x.strip())  # extra strip if needed
-            
-            df["Opponent Rating"] = df["opponent_rating"].astype(int)
-            df["Result"] = df["result"].astype(str)
-            st.session_state.games = df[["Opponent Rating", "Result"]].copy()
-            st.success(f"Imported {len(df)} games!")
+        # Look for rating column (must contain "opponent" and "rating")
+        rating_col = None
+        for norm, orig in normalized_cols.items():
+            if "opponent" in norm and "rating" in norm:
+                rating_col = orig
+                break
+        
+        # Look for result column (must contain "result")
+        result_col = None
+        for norm, orig in normalized_cols.items():
+            if "result" in norm:
+                result_col = orig
+                break
+        
+        if rating_col is None or result_col is None:
+            st.error("CSV must have a column with 'opponent' and 'rating' (e.g., opponent_rating, Opponent Rating) and a column with 'result'")
         else:
-            st.error("CSV must have columns: opponent_rating and result (case-insensitive)")
+            # Clean and convert
+            df[rating_col] = pd.to_numeric(df[rating_col], errors='coerce')
+            df = df.dropna(subset=[rating_col])
+            df[rating_col] = df[rating_col].astype(int)
+            df[result_col] = df[result_col].astype(str).str.strip()
+            
+            # Update session state
+            st.session_state.games = pd.DataFrame({
+                "Opponent Rating": df[rating_col],
+                "Result": df[result_col]
+            }).reset_index(drop=True)
+            
+            st.success(f"Successfully imported {len(df)} games!")
+            st.rerun()
     except Exception as e:
-        st.error(f"Error: {e}")
+        st.error(f"Error reading CSV: {e}")
 
 # === EDITABLE TABLE ===
 st.subheader(f"Your Games ({len(st.session_state.games)})")
