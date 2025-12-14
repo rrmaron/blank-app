@@ -130,41 +130,35 @@ with st.expander("Add Game", expanded=True):
 
 
 # === CSV IMPORT — FIXED (case-insensitive column check) ===
-# === CSV IMPORT — FULLY FLEXIBLE (spaces, underscores, mixed case) ===
-st.download_button("Download CSV Template", data="opponent_rating,result\n1800,0.5\n1800,0.5\n", file_name="fide_template.csv", mime="text/csv")
+# === CSV IMPORT — FULLY CASE-INSENSITIVE & FIXED ===
+# st.download_button("Download CSV Template", data="opponent_rating,result\n1800,0.5\n1800,0.5\n", file_name="fide_template.csv", mime="text/csv")
 
 uploaded = st.file_uploader("Upload CSV (will replace current games)", type=["csv"])
 if uploaded:
     try:
         df = pd.read_csv(uploaded)
         
-        # Normalize column names for matching: lower case, remove spaces and underscores
-        normalized_cols = {col.strip().lower().replace(" ", "").replace("_", ""): col for col in df.columns}
+        # Create a mapping from lowercased column names to actual
+        col_map = {}
+        for col in df.columns:
+            lower_col = col.strip().lower().replace(" ", "_")
+            if "rating" in lower_col:
+                col_map["opponent_rating"] = col
+            if "result" in lower_col:
+                col_map["result"] = col
         
-        # Look for rating column (must contain "opponent" and "rating")
-        rating_col = None
-        for norm, orig in normalized_cols.items():
-            if "opponent" in norm and "rating" in norm:
-                rating_col = orig
-                break
-        
-        # Look for result column (must contain "result")
-        result_col = None
-        for norm, orig in normalized_cols.items():
-            if "result" in norm:
-                result_col = orig
-                break
-        
-        if rating_col is None or result_col is None:
-            st.error("CSV must have a column with 'opponent' and 'rating' (e.g., opponent_rating, Opponent Rating) and a column with 'result'")
+        if "opponent_rating" not in col_map or "result" not in col_map:
+            st.error("CSV must have columns containing 'rating' and 'result' (e.g., opponent_rating, result)")
         else:
-            # Clean and convert
+            # Use the actual column names
+            rating_col = col_map["opponent_rating"]
+            result_col = col_map["result"]
+            
             df[rating_col] = pd.to_numeric(df[rating_col], errors='coerce')
             df = df.dropna(subset=[rating_col])
             df[rating_col] = df[rating_col].astype(int)
             df[result_col] = df[result_col].astype(str).str.strip()
             
-            # Update session state
             st.session_state.games = pd.DataFrame({
                 "Opponent Rating": df[rating_col],
                 "Result": df[result_col]
