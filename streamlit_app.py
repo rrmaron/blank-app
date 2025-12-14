@@ -1,4 +1,4 @@
-# app.py — FIDE Initial Rating Calculator — CSV IMPORT FIXED & FINAL
+# app.py — FIDE Initial Rating Calculator — Rating shown under heading
 
 import streamlit as st
 import pandas as pd
@@ -6,14 +6,14 @@ from datetime import datetime
 from io import BytesIO
 import base64
 
-
+# Auto-install reportlab
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 from reportlab.lib.units import inch
 
-# ====================== FIDE LOGIC ======================
+# ====================== FIDE dp TABLE ======================
 def fide_dp_table():
     return {1.00:800,0.99:677,0.98:589,0.97:538,0.96:501,0.95:470,0.94:444,0.93:422,0.92:401,0.91:383,
             0.90:366,0.89:351,0.88:336,0.87:322,0.86:309,0.85:296,0.84:284,0.83:273,0.82:262,0.81:251,
@@ -35,8 +35,10 @@ def get_dp(p):
             return table[threshold]
     return -800
 
+# ====================== CALCULATION ======================
 def calculate_rating(opponents, results):
-    if len(opponents) < 5: return None
+    if len(opponents) < 5:
+        return None
     games = len(opponents)
     avg = sum(opponents) // games
     score = sum(1 if str(r).strip() in ["1","1.0"] else 0.5 if str(r).strip() in ["0.5","0,5","="] else 0 for r in results)
@@ -47,22 +49,29 @@ def calculate_rating(opponents, results):
     if avg >= 2000 and perc >= 0.50: rating = max(rating, 1600)
     if Rp >= 2250: rating = max(rating, 1800)
     if Rp >= 2400: rating = max(rating, 2000)
-    return {"rating": round(rating), "Rp": round(Rp), "avg": avg, "score": score, "games": games, "perc": round(perc*100,1), "dp": dp}
+    return {
+        "rating": round(rating), "Rp": round(Rp), "avg": avg,
+        "score": score, "games": games, "perc": round(perc*100,1), "dp": dp
+    }
 
+# ====================== PDF GENERATOR ======================
 def generate_pdf(data, name):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=1.5*inch)
     styles = getSampleStyleSheet()
     story = []
-    story.append(Paragraph("FIDE Initial Rating Certificate", ParagraphStyle('Title', parent=styles['Title'], fontSize=36, alignment=1, spaceAfter=60, textColor="#003087")))
+    story.append(Paragraph("FIDE Initial Rating Certificate",
+                          ParagraphStyle('Title', parent=styles['Title'], fontSize=36, alignment=1, spaceAfter=60, textColor="#003087")))
     story.append(Paragraph(f"<b>{name or 'Chess Player'}</b>", ParagraphStyle('Name', fontSize=28, alignment=1, spaceAfter=40)))
-    story.append(Paragraph(f"<font size=90><b>{data['rating']}</b></font>", ParagraphStyle('Rating', alignment=1, textColor="#003087")))
+    story.append(Paragraph(f"<font size=90><b>{data['rating']}</b></font>",
+                          ParagraphStyle('Rating', alignment=1, textColor="#003087")))
     story.append(Paragraph("First Official FIDE Rating", ParagraphStyle('Sub', fontSize=22, alignment=1, spaceAfter=60)))
+
     t = Table([
-        ["Games", str(data['games'])],
-        ["Avg Opponent", str(data['avg'])],
+        ["Games Played", str(data['games'])],
+        ["Average Opponent", str(data['avg'])],
         ["Score", f"{data['score']}/{data['games']} ({data['perc']}%)"],
-        ["Performance", str(data['Rp'])],
+        ["Performance Rating", str(data['Rp'])],
         ["Date", datetime.now().strftime("%B %d, %Y")],
     ], colWidths=[3.8*inch, 2.8*inch])
     t.setStyle(TableStyle([
@@ -77,8 +86,9 @@ def generate_pdf(data, name):
     buffer.seek(0)
     return buffer
 
-# ====================== APP ======================
+# ====================== STREAMLIT APP ======================
 st.set_page_config(page_title="FIDE Rating Pro", page_icon="Trophy", layout="centered")
+
 st.markdown("<h1 style='text-align: center; color: #003087;'>FIDE Initial Rating Calculator</h1>", unsafe_allow_html=True)
 
 # === DEFAULT GAMES ===
@@ -90,34 +100,20 @@ default_games = pd.DataFrame([
 if "games" not in st.session_state:
     st.session_state.games = default_games.copy()
 
-# === CSV IMPORT — FINAL FIX (WORKS 100%) ===
-uploaded = st.file_uploader("Upload CSV (opponent_rating, result)", type=["csv"])
+# === CALCULATE RATING EARLY FOR HEADER DISPLAY ===
+rating_result = calculate_rating(
+    st.session_state.games["Opponent Rating"].tolist(),
+    st.session_state.games["Result"].tolist()
+)
 
-if uploaded:
-    try:
-        df = pd.read_csv(uploaded)
-        df.columns = [col.strip().lower().replace(" ", "_") for col in df.columns]
-        
-        if "opponent_rating" not in df.columns or "result" not in df.columns:
-            st.error("CSV must have: opponent_rating and result")
-        else:
-            df["opponent_rating"] = pd.to_numeric(df["opponent_rating"], errors='coerce')
-            df = df.dropna(subset=["opponent_rating"])
-            df["opponent_rating"] = df["opponent_rating"].astype(int)
-            df["result"] = df["result"].astype(str).str.strip()
-            
-            # THE ONLY FIX YOU NEED:
-            st.session_state.games = pd.DataFrame({
-                "Opponent Rating": df["opponent_rating"].values,
-                "Result": df["result"].values
-            })
-            
-            st.success(f"Successfully imported {len(df)} games!  Click on the X above to Close the uploaded message and then you will see the list of games imported and initial rating below ")
-            st.rerun()  # This now works perfectly
-    except Exception as e:
-        st.error(f"Error: {e}")
+if rating_result:
+    st.markdown(f"<h2 style='text-align: center; color: #003087;'>Your First FIDE Rating: <b>{rating_result['rating']}</b></h2>", unsafe_allow_html=True)
+else:
+    st.markdown("<h2 style='text-align: center; color: #888;'>Your First FIDE Rating: <i>Not yet available (need 5+ games)</i></h2>", unsafe_allow_html=True)
 
-# === ADD GAME ===
+st.markdown("---")
+
+# === QUICK ADD GAME ===
 with st.expander("Add Game", expanded=True):
     c1, c2, c3 = st.columns([3, 2, 1])
     with c1:
@@ -125,14 +121,33 @@ with st.expander("Add Game", expanded=True):
     with c2:
         result = st.selectbox("Result", ["1 (Win)", "0.5 (Draw)", "0 (Loss)"])
     with c3:
-        if st.button("Add", type="primary"):
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("Add", type="primary", use_container_width=True):
             new_row = pd.DataFrame([{"Opponent Rating": rating, "Result": "1" if "Win" in result else "0.5" if "Draw" in result else "0"}])
             st.session_state.games = pd.concat([st.session_state.games, new_row], ignore_index=True)
+            st.success("Game added!")
             st.rerun()
 
-# === TABLE ===
-st.subheader(f"Your Games ({len(st.session_state.games)})")
+# === CSV IMPORT ===
+st.download_button("Download CSV Template", data="opponent_rating,result\n1800,0.5\n1800,0.5\n", file_name="fide_template.csv", mime="text/csv")
 
+uploaded = st.file_uploader("Upload CSV (will replace current games)", type=["csv"])
+if uploaded:
+    try:
+        df = pd.read_csv(uploaded)
+        if {"opponent_rating", "result"}.issubset(set(df.columns.str.lower())):
+            df = df.rename(columns=str.lower)
+            df["Opponent Rating"] = df["opponent_rating"].astype(int)
+            df["Result"] = df["result"].astype(str)
+            st.session_state.games = df[["Opponent Rating", "Result"]].copy()
+            st.success(f"Imported {len(df)} games!")
+        else:
+            st.error("CSV must have: opponent_rating, result")
+    except Exception as e:
+        st.error(f"Error: {e}")
+
+# === EDITABLE TABLE ===
+st.subheader(f"Your Games ({len(st.session_state.games)})")
 edited = st.data_editor(
     st.session_state.games,
     num_rows="dynamic",
@@ -140,40 +155,39 @@ edited = st.data_editor(
     column_config={
         "Opponent Rating": st.column_config.NumberColumn("Opponent Rating", min_value=800, max_value=3000, step=1),
         "Result": st.column_config.SelectboxColumn("Result", options=["1", "0.5", "0"], default="0.5")
-    }
+    },
+    hide_index=False
 )
 
 if not edited.equals(st.session_state.games):
     st.session_state.games = edited.copy()
     st.success("Changes saved!")
 
-# Buttons
 col1, col2 = st.columns(2)
 with col1:
-    if st.button("Reset to 2 Games"):
+    if st.button("Clear All Games"):
         st.session_state.games = default_games.copy()
         st.rerun()
 with col2:
     csv = st.session_state.games.to_csv(index=False)
-    st.download_button("Export CSV", csv, "my_games.csv", "text/csv")
+    st.download_button("Export CSV", csv, "my_fide_games.csv", "text/csv")
 
-# === RATING ===
-if len(st.session_state.games) >= 5:
-    result = calculate_rating(st.session_state.games["Opponent Rating"].tolist(), st.session_state.games["Result"].tolist())
-    st.markdown(f"### Your First FIDE Rating: **{result['rating']}**")
+# === DETAILED RATING (only if 5+ games) ===
+if rating_result:
     c1, c2, c3 = st.columns(3)
-    c1.metric("Games", result['games'])
-    c2.metric("Score %", f"{result['perc']}%")
-    c3.metric("Avg Opponent", result['avg'])
-    
-    name = st.text_input("Your Name", "Chess Player")
-    if st.button("Download Certificate", type="primary"):
-        pdf = generate_pdf(result, name)
+    c1.metric("Games", rating_result['games'])
+    c2.metric("Score %", f"{rating_result['perc']}%")
+    c3.metric("Avg Opponent", rating_result['avg'])
+    st.caption(f"Performance: {rating_result['Rp']} • dp: {rating_result['dp']:+}")
+
+    name = st.text_input("Your Name", placeholder="e.g. Your Name")
+    if st.button("Download PDF Certificate", type="primary"):
+        pdf = generate_pdf(rating_result, name or "Chess Player")
         b64 = base64.b64encode(pdf.read()).decode()
-        href = f'<a href="data:application/pdf;base64,{b64}" download="FIDE_Rating_{result["rating"]}.pdf">Download</a>'
+        href = f'<a href="data:application/pdf;base64,{b64}" download="FIDE_Rating_{rating_result["rating"]}.pdf">Download Certificate</a>'
         st.markdown(href, unsafe_allow_html=True)
         st.balloons()
 else:
-    st.info(f"Need 5+ games • You have {len(st.session_state.games)}")
+    st.info(f"Need 5+ games to calculate rating • You have {len(st.session_state.games)}")
 
-st.caption("CSV Import FIXED • Table updates instantly • 100% working")
+st.caption("Starts with 2 default games • Edit freely • 100% free")
