@@ -129,6 +129,15 @@ st.set_page_config(page_title="FIDE Rating Pro", page_icon="Trophy", layout="cen
 
 st.markdown("<h1 style='text-align: center; color: #003087;'>FIDE Initial Rating Calculator</h1>", unsafe_allow_html=True)
 
+# === EXPLANATORY PARAGRAPH UNDER HEADING ===
+st.markdown("""
+<p style='text-align: center; color: #555; font-size: 1.1em; margin: 0 0 1rem 0;'>
+To calculate the initial rating, it starts with 2 draws against fictional opponents that have a 1800 rating — these are prefilled below. Then we need 5 more results against FIDE-rated opponents to get your first official rating.
+</p>
+""", unsafe_allow_html=True)
+
+st.markdown("---")
+
 # === DEFAULT GAMES ===
 default_games = pd.DataFrame([
     {"Opponent Rating": 1800, "Result": "0.5"},
