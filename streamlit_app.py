@@ -37,7 +37,7 @@ def get_dp(p):
 
 # ====================== CALCULATION ======================
 def calculate_rating(opponents, results):
-    if len(opponents) < 5:
+    if len(opponents) < 7:
         return None
     games = len(opponents)
     avg = sum(opponents) // games
@@ -156,7 +156,7 @@ rating_result = calculate_rating(
 if rating_result:
     st.markdown(f"<h2 style='text-align: center; color: #003087;'>Your First FIDE Rating: <b>{rating_result['rating']}</b></h2>", unsafe_allow_html=True)
 else:
-    st.markdown("<h2 style='text-align: center; color: #888;'>Your First FIDE Rating: <i>Not yet available (need 5+ games)</i></h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align: center; color: #888;'>Your First FIDE Rating: <i>Not yet available (need 5+ real games)</i></h2>", unsafe_allow_html=True)
 
 st.markdown("---")
 
