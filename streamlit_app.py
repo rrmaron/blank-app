@@ -235,6 +235,6 @@ if rating_result:
         st.markdown(href, unsafe_allow_html=True)
         st.balloons()
 else:
-    st.info(f"Need 5+ real games against FIDE rated opponents to calculate rating • You have {len(st.session_state.games)}")
+    st.info(f"Need 5+ real games against FIDE rated opponents to calculate rating • You have {len(st.session_state.games)-2}")
 
 st.caption("Starts with 2 default games • Edit freely • 100% free")
