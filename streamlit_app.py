@@ -133,9 +133,9 @@ st.markdown("<h1 style='text-align: center; color: #003087;'>FIDE Initial Rating
 st.markdown("""
 <p style='text-align: center; color: #555; font-size: 1.1em; margin: 0 0 1rem 0;'>
 To calculate the initial rating, it starts with 2 draws against fictional opponents that have a 1800 rating — these are prefilled below. 
-Then we need 5 more results against FIDE-rated opponents to get your first official rating.  Only start entering results after you have 
-at least drawn against a FIDE rated opponent, so FIDE tournaments where you have earned 0 points do not count until you have at least drawn 
-against a FIDE rated opponemt.
+Then we need 5 more results against FIDE-rated opponents to get your first official rating.  Only start entering results from a tournament in which you have 
+at least drawn against a FIDE rated opponent, so games in FIDE tournaments where you have earned 0 points should not be added.   
+
 </p>
 """, unsafe_allow_html=True)
 
@@ -197,7 +197,7 @@ if uploaded:
         st.error(f"Error: {e}")
 
 # === EDITABLE TABLE ===
-st.subheader(f"Your Games ({len(st.session_state.games)})")
+st.subheader(f"Your Games ({len(st.session_state.games)}-2)")
 edited = st.data_editor(
     st.session_state.games,
     num_rows="dynamic",
