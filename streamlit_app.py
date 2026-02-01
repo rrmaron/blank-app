@@ -197,7 +197,7 @@ if uploaded:
         st.error(f"Error: {e}")
 
 # === EDITABLE TABLE ===
-st.subheader(f"Your Games ({len(st.session_state.games)}-2)")
+st.subheader(f"Your Games ({len(st.session_state.games)-2})")
 edited = st.data_editor(
     st.session_state.games,
     num_rows="dynamic",
