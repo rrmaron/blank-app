@@ -206,6 +206,12 @@ edited = st.data_editor(
     hide_index=False
 )
 
+# === IMMEDIATE RECALCULATION ON EDIT ===
+if not edited.equals(st.session_state.games):
+    st.session_state.games = edited.copy()
+    st.success("Changes saved — rating updated!")
+    st.rerun()  # Re-run to recalculate and refresh display
+    
 if not edited.equals(st.session_state.games):
     st.session_state.games = edited.copy()
     st.success("Changes saved!")
