@@ -168,7 +168,10 @@ if uploaded:
             st.error("CSV must have: opponent_rating, result")
     except Exception as e:
         st.error(f"Error: {e}")
-
+st.markdown(
+    "<small style='color: #888;'>Tip: If the file is grayed out after download, rename it to remove spaces/parentheses (e.g. my_fide_games1.csv)</small>",
+    unsafe_allow_html=True
+)
 # === EDITABLE TABLE ===
 st.subheader(f"Your Games ({len(st.session_state.games)-2})")
 edited = st.data_editor(
@@ -213,4 +216,4 @@ if rating_result:
 else:
     st.info(f"Need 5+ real games against FIDE rated opponents to calculate rating • You have {len(st.session_state.games)-2}")
 
-st.caption("Starts with 2 default games • Edit freely • 100% free")
+st.caption("Starts with 2 default games")
