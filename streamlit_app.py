@@ -47,21 +47,45 @@ def get_dp(p):
 
 # ====================== CALCULATION ======================
 def calculate_rating(opponents, results):
-    if len(opponents) < 5:
+    # Filter out invalid rows (None, NaN, empty)
+    valid_pairs = []
+    for opp, res in zip(opponents, results):
+        if opp is not None and pd.notna(opp) and res is not None and pd.notna(res):
+            try:
+                opp_val = int(float(opp))  # safe conversion
+                res_str = str(res).strip()
+                if res_str in ["1", "1.0", "0.5", "0", "0,5", "="]:
+                    valid_pairs.append((opp_val, res_str))
+            except (ValueError, TypeError):
+                pass  # skip invalid
+
+    opponents_clean = [opp for opp, _ in valid_pairs]
+    results_clean = [res for _, res in valid_pairs]
+
+    if len(opponents_clean) < 5:
         return None
-    games = len(opponents)
-    avg = sum(opponents) // games
-    score = sum(1 if str(r).strip() in ["1","1.0"] else 0.5 if str(r).strip() in ["0.5","0,5","="] else 0 for r in results)
+
+    games = len(opponents_clean)
+    avg = sum(opponents_clean) // games
+    score = sum(1 if r in ["1", "1.0"] else 0.5 if r in ["0.5", "0,5", "="] else 0 for r in results_clean)
     perc = score / games
     dp = get_dp(perc)
     Rp = avg + dp
     rating = max(Rp, 1000)
-    if avg >= 2000 and perc >= 0.50: rating = max(rating, 1600)
-    if Rp >= 2250: rating = max(rating, 1800)
-    if Rp >= 2400: rating = max(rating, 2000)
+    if avg >= 2000 and perc >= 0.50:
+        rating = max(rating, 1600)
+    if Rp >= 2250:
+        rating = max(rating, 1800)
+    if Rp >= 2400:
+        rating = max(rating, 2000)
     return {
-        "rating": round(rating), "Rp": round(Rp), "avg": avg,
-        "score": score, "games": games, "perc": round(perc*100,1), "dp": dp
+        "rating": round(rating),
+        "Rp": round(Rp),
+        "avg": avg,
+        "score": score,
+        "games": games,
+        "perc": round(perc * 100, 1),
+        "dp": dp
     }
 
 # ====================== PDF GENERATOR ======================
