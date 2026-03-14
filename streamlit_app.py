@@ -219,12 +219,7 @@ with col2:
     csv = st.session_state.games.to_csv(index=False)
     st.download_button("Export CSV", csv, "my_fide_games.csv", "text/csv")
 
-if len(real_games) >= 0:
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Games", rating_result['games'])
-    c2.metric("Score %", f"{rating_result['perc']}%")
-    c3.metric("Avg Opponent", rating_result['avg'])
-    st.caption(f"Performance: {rating_result['Rp']} • dp: {rating_result['dp']:+}")
+
     
 # === DETAILED RATING (only if 5+ real games) ===
 if rating_result and len(real_games) >= 5:
@@ -232,7 +227,7 @@ if rating_result and len(real_games) >= 5:
     c1.metric("Games", rating_result['games'])
     c2.metric("Score %", f"{rating_result['perc']}%")
     c3.metric("Avg Opponent", rating_result['avg'])
-    #st.caption(f"Performance: {rating_result['Rp']} • dp: {rating_result['dp']:+}")
+    st.caption(f"Performance: {rating_result['Rp']} • dp: {rating_result['dp']:+}")
 
     
     name = st.text_input("Your Name", placeholder="e.g. Your Name")
