@@ -146,7 +146,7 @@ with st.expander("Add Game", expanded=True):
         result = st.selectbox("Result", ["1 (Win)", "0.5 (Draw)", "0 (Loss)"])
     with c3:
         st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("Add", type="primary", use_container_width=True):
+        if st.button("Add", type="primary", width='stretch',):
             new_row = pd.DataFrame([{"Opponent Rating": rating, "Result": "1" if "Win" in result else "0.5" if "Draw" in result else "0"}])
             st.session_state.games = pd.concat([st.session_state.games, new_row], ignore_index=True)
             st.success("Game added!")
@@ -176,7 +176,7 @@ st.subheader(f"Your Games ({len(st.session_state.games)-2})")
 edited = st.data_editor(
     st.session_state.games,
     num_rows="dynamic",
-    use_container_width=True,
+    width='stretch',
     column_config={
         "Opponent Rating": st.column_config.NumberColumn("Opponent Rating", min_value=800, max_value=3000, step=1),
         "Result": st.column_config.SelectboxColumn("Result", options=["1", "0.5", "0"], default="0.5")
