@@ -246,7 +246,10 @@ with col1:
         st.session_state.games = default_games.copy()
         st.rerun()
 with col2:
-    csv = st.session_state.games.to_csv(index=False)
+    export_df = st.session_state.games.copy()
+    export_df["Result"] = export_df["Result"].astype(str)
+    
+    csv = export_df.to_csv(index=False)
     st.download_button("Export CSV", csv, "my_fide_games.csv", "text/csv")
 
 
