@@ -113,12 +113,15 @@ else:
 
 # === EXPLANATORY PARAGRAPH ===
 st.markdown("""
-<p style='text-align: center; color: #555; font-size: 1.1em; margin: 0 0 1rem 0;'>
+<p style='text-align: left; color: #555; font-size: 1.1em; margin: 0 0 1rem 0;'>
 To calculate the initial rating, it starts with 2 draws against fictional opponents that have a 1800 rating — these are prefilled below.<br>
 Then we need 5 more results against FIDE-rated opponents to get your first official rating. <br>
 Only start entering results from a tournament in which you have at least drawn against a FIDE rated opponent,
 so games in FIDE tournaments where you have earned 0 points should not be added. <br>
 If you have lost your FIDE rating (gone below 1400), then you have to start again from the beginning and would need a minimum of 5 games again with at least 0.5 points to get a rating
+<br>
+<br>
+Use the "Add Game" box below to add any games played against FIDE opponents.    <a href="https://ratings.fide.com/">Fide Ratings Site</a>
 </p>
 """, unsafe_allow_html=True)
 
