@@ -1,4 +1,4 @@
-# app.py — FIDE Initial Rating Calculator — Rating & Description Under Heading
+# app.py — FIDE Initial Rating Calculator — Rating only after 5 real games
 
 import streamlit as st
 import pandas as pd
@@ -100,35 +100,6 @@ st.set_page_config(page_title="FIDE Rating Pro", page_icon="Trophy", layout="cen
 
 st.markdown("<h1 style='text-align: center; color: #003087;'>FIDE Initial Rating Calculator</h1>", unsafe_allow_html=True)
 
-# === RATING UNDER HEADING ===
-rating_result = calculate_rating(
-    st.session_state.games["Opponent Rating"].tolist(),
-    st.session_state.games["Result"].tolist()
-) if "games" in st.session_state else None
-
-if rating_result:
-    st.markdown(f"<h2 style='text-align: center; color: #003087;'>Your First FIDE Rating: <b>{rating_result['rating']}</b></h2>", unsafe_allow_html=True)
-else:
-    st.markdown("<h2 style='text-align: center; color: #888;'>Your First FIDE Rating: <i>Not yet available (need 5+ real games)</i></h2>", unsafe_allow_html=True)
-
-# === EXPLANATORY PARAGRAPH ===
-st.markdown("""
-<p style='text-align: left; color: #555; font-size: 1.1em; margin: 0 0 1rem 0;'>
-To calculate the initial rating, it starts with 2 draws against fictional opponents that have a 1800 rating — these are prefilled below.<br>
-Then we need 5 more results against FIDE-rated opponents to get your first official rating. <br>
-Only start entering results from a tournament in which you have at least drawn against a FIDE rated opponent,
-so games in FIDE tournaments where you have earned 0 points should not be added. <br>
-If you have lost your FIDE rating (gone below 1400), then you have to start again from the beginning and would need a minimum of 5 games again with at least 0.5 points to get a rating
-<br>
-<br>
-Use the "Add Game" box below to add any games played against FIDE opponents.   
-<br> Can get your older games from the FIDE site  <a href="https://ratings.fide.com/">Fide Ratings Site</a>  
-Put in your name and search and when your find your name,  Go to "Calculations" and go each month played and "View"
-</p>
-""", unsafe_allow_html=True)
-
-st.markdown("---")
-
 # === DEFAULT GAMES ===
 default_games = pd.DataFrame([
     {"Opponent Rating": 1800, "Result": "0.5"},
@@ -137,6 +108,32 @@ default_games = pd.DataFrame([
 
 if "games" not in st.session_state:
     st.session_state.games = default_games.copy()
+
+# === CALCULATE RATING ONLY FROM REAL GAMES ===
+real_games = st.session_state.games.iloc[2:] if len(st.session_state.games) > 2 else pd.DataFrame(columns=["Opponent Rating", "Result"])
+
+rating_result = calculate_rating(
+    real_games["Opponent Rating"].tolist(),
+    real_games["Result"].tolist()
+) if not real_games.empty else None
+
+# === RATING UNDER HEADING ===
+if rating_result and len(real_games) >= 5:
+    st.markdown(f"<h2 style='text-align: center; color: #003087;'>Your First FIDE Rating: <b>{rating_result['rating']}</b></h2>", unsafe_allow_html=True)
+else:
+    st.markdown("<h2 style='text-align: center; color: #888;'>Your First FIDE Rating: <i>Not yet available (need 5+ real games)</i></h2>", unsafe_allow_html=True)
+
+# === EXPLANATORY PARAGRAPH ===
+st.markdown("""
+<p style='text-align: center; color: #555; font-size: 1.1em; margin: 0 0 1rem 0;'>
+To calculate the initial rating, it starts with 2 draws against fictional opponents that have a 1800 rating — these are prefilled below.<br>
+Then we need 5 more results against FIDE-rated opponents to get your first official rating. <br>
+Only start entering results from a tournament in which you have at least drawn against a FIDE rated opponent,
+so games in FIDE tournaments where you have earned 0 points should not be added.
+</p>
+""", unsafe_allow_html=True)
+
+st.markdown("---")
 
 # === QUICK ADD GAME ===
 with st.expander("Add Game", expanded=True):
@@ -154,63 +151,33 @@ with st.expander("Add Game", expanded=True):
             st.rerun()
 
 # === CSV IMPORT ===
-# === CSV IMPORT — Auto-clear uploader, no "X" needed ===
 st.download_button("Download CSV Template", data="opponent_rating,result\n1800,0.5\n1800,0.5\n", file_name="fide_template.csv", mime="text/csv")
 
-# Use a key to force re-render after clear
-uploaded = st.file_uploader(
-    "Upload CSV (will replace current games)",
-    type=["csv"],
-    accept_multiple_files=False,
-    key=f"uploader_{st.session_state.get('upload_key', 0)}"
-)
-
-if uploaded is not None:
+uploaded = st.file_uploader("Upload CSV (will replace current games)", type=["csv"])
+if uploaded:
     try:
         df = pd.read_csv(uploaded)
-        df.columns = [col.strip().lower().replace(" ", "_") for col in df.columns]
-        
-        if {"opponent_rating", "result"}.issubset(df.columns):
-            df["opponent_rating"] = pd.to_numeric(df["opponent_rating"], errors='coerce')
-            df = df.dropna(subset=["opponent_rating"])
-            df["opponent_rating"] = df["opponent_rating"].astype(int)
-            df["result"] = df["result"].astype(str).str.strip()
-            
-            # Update games
-            st.session_state.games = pd.DataFrame({
-                "Opponent Rating": df["opponent_rating"],
-                "Result": df["result"]
-            }).reset_index(drop=True)
-            
-            # Clear the uploader widget
-            st.session_state.uploaded_file = None
-            st.session_state.upload_key = st.session_state.get("upload_key", 0) + 1
-            
-            # Show non-blocking success message
-            st.toast(f"Imported {len(df)} games successfully!", icon="✅")
-            
-            # Force refresh so table updates
+        if {"opponent_rating", "result"}.issubset(set(df.columns.str.lower())):
+            df = df.rename(columns=str.lower)
+            df["Opponent Rating"] = df["opponent_rating"].astype(int)
+            df["Result"] = df["result"].astype(str)
+            st.session_state.games = df[["Opponent Rating", "Result"]].copy()
+            st.success(f"Imported {len(df)} games!")
             st.rerun()
         else:
-            st.error("CSV must have columns: opponent_rating and result as headings")
+            st.error("CSV must have: opponent_rating, result")
     except Exception as e:
-        st.error(f"Error reading CSV: {e}")
+        st.error(f"Error: {e}")
 
-
-
-st.markdown(
-    "<small style='color: #888;'>Tip: If the file is grayed out after download, rename it to remove spaces/parentheses (e.g. my_fide_games1.csv)</small>",
-    unsafe_allow_html=True
-)
 # === EDITABLE TABLE ===
-st.subheader(f"Your Games ({len(st.session_state.games)-2})")
+st.subheader(f"Your Real Games ({len(st.session_state.games)-2})")
 edited = st.data_editor(
     st.session_state.games,
     num_rows="dynamic",
     use_container_width=True,
     column_config={
-        "Opponent Rating": st.column_config.NumberColumn("opponent_rating", min_value=800, max_value=3000, step=1),
-        "Result": st.column_config.SelectboxColumn("result", options=["1", "0.5", "0"], default="0.5")
+        "Opponent Rating": st.column_config.NumberColumn("Opponent Rating", min_value=800, max_value=3000, step=1),
+        "Result": st.column_config.SelectboxColumn("Result", options=["1", "0.5", "0"], default="0.5")
     },
     hide_index=False
 )
@@ -228,8 +195,8 @@ with col2:
     csv = st.session_state.games.to_csv(index=False)
     st.download_button("Export CSV", csv, "my_fide_games.csv", "text/csv")
 
-# === DETAILED RATING ===
-if rating_result:
+# === DETAILED RATING (only if 5+ real games) ===
+if rating_result and len(real_games) >= 5:
     c1, c2, c3 = st.columns(3)
     c1.metric("Games", rating_result['games'])
     c2.metric("Score %", f"{rating_result['perc']}%")
@@ -244,6 +211,6 @@ if rating_result:
         st.markdown(href, unsafe_allow_html=True)
         st.balloons()
 else:
-    st.info(f"Need 5+ real games against FIDE rated opponents to calculate rating • You have {len(st.session_state.games)-2}")
+    st.info(f"Need 5+ real games against FIDE rated opponents to calculate rating • You have {len(real_games)} real games")
 
-st.caption("Starts with 2 default games")
+st.caption("Starts with 2 default games • Edit freely • 100% free")
