@@ -123,17 +123,26 @@ if rating_result and len(real_games) >= 5:
 else:
     st.markdown("<h2 style='text-align: center; color: #888;'>Your First FIDE Rating: <i>Not yet available (need 5+ real games)</i></h2>", unsafe_allow_html=True)
 
+
 # === EXPLANATORY PARAGRAPH ===
 st.markdown("""
-<p style='text-align: center; color: #555; font-size: 1.1em; margin: 0 0 1rem 0;'>
+<p style='text-align: left; color: #555; font-size: 1.1em; margin: 0 0 1rem 0;'>
 To calculate the initial rating, it starts with 2 draws against fictional opponents that have a 1800 rating — these are prefilled below.<br>
 Then we need 5 more results against FIDE-rated opponents to get your first official rating. <br>
 Only start entering results from a tournament in which you have at least drawn against a FIDE rated opponent,
-so games in FIDE tournaments where you have earned 0 points should not be added.
+so games in FIDE tournaments where you have earned 0 points should not be added. <br>
+If you have lost your FIDE rating (gone below 1400), then you have to start again from the beginning and would need a minimum of 5 games again with at least 0.5 points to get a rating
+<br>
+<br>
+Use the "Add Game" box below to add any games played against FIDE opponents.   
+<br> Can get your older games from the FIDE site  <a href="https://ratings.fide.com/">Fide Ratings Site</a>  
+Put in your name and search and when your find your name,  Go to "Calculations" and go each month played and "View"
 </p>
 """, unsafe_allow_html=True)
 
 st.markdown("---")
+
+
 
 # === QUICK ADD GAME ===
 with st.expander("Add Game", expanded=True):
@@ -210,7 +219,7 @@ with col2:
     csv = st.session_state.games.to_csv(index=False)
     st.download_button("Export CSV", csv, "my_fide_games.csv", "text/csv")
 
-if rating_result and len(real_games) >= 0:
+if len(real_games) >= 0:
     c1, c2, c3 = st.columns(3)
     c1.metric("Games", rating_result['games'])
     c2.metric("Score %", f"{rating_result['perc']}%")
