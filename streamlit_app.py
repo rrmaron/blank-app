@@ -101,19 +101,15 @@ st.set_page_config(page_title="FIDE Rating Pro", page_icon="Trophy", layout="cen
 st.markdown("<h1 style='text-align: center; color: #003087;'>FIDE Initial Rating Calculator</h1>", unsafe_allow_html=True)
 
 # === RATING UNDER HEADING ===
-# === CALCULATE RATING ONLY USING REAL GAMES ===
-real_games = st.session_state.games.iloc[2:]  # skip first 2 (defaults)
-
 rating_result = calculate_rating(
-    real_games["Opponent Rating"].tolist(),
-    real_games["Result"].tolist()
-) if len(real_games) > 0 else None
+    st.session_state.games["Opponent Rating"].tolist(),
+    st.session_state.games["Result"].tolist()
+) if "games" in st.session_state else None
 
-
-if rating_result and len(real_games) >= 5:
+if rating_result:
     st.markdown(f"<h2 style='text-align: center; color: #003087;'>Your First FIDE Rating: <b>{rating_result['rating']}</b></h2>", unsafe_allow_html=True)
 else:
-    st.markdown("<h2 style='text-align: center; color: #888;'>Your First FIDE Rating: <i>Not yet available (need 5+ real games against FIDE-rated opponents)</i></h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align: center; color: #888;'>Your First FIDE Rating: <i>Not yet available (need 5+ real games)</i></h2>", unsafe_allow_html=True)
 
 # === EXPLANATORY PARAGRAPH ===
 st.markdown("""
@@ -233,7 +229,7 @@ with col2:
     st.download_button("Export CSV", csv, "my_fide_games.csv", "text/csv")
 
 # === DETAILED RATING ===
-if rating_result and len(real_games) >= 5:
+if rating_result:
     c1, c2, c3 = st.columns(3)
     c1.metric("Games", rating_result['games'])
     c2.metric("Score %", f"{rating_result['perc']}%")
@@ -248,6 +244,6 @@ if rating_result and len(real_games) >= 5:
         st.markdown(href, unsafe_allow_html=True)
         st.balloons()
 else:
-    st.info(f"Need 5+ real games against FIDE rated opponents to calculate rating • You have {len(real_games)} real games")
+    st.info(f"Need 5+ real games against FIDE rated opponents to calculate rating • You have {len(st.session_state.games)-2}")
 
 st.caption("Starts with 2 default games")
