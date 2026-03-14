@@ -172,8 +172,8 @@ edited = st.data_editor(
     num_rows="dynamic",
     use_container_width=True,
     column_config={
-        "Opponent Rating": st.column_config.NumberColumn("Opponent Rating", min_value=800, max_value=3000, step=1),
-        "Result": st.column_config.SelectboxColumn("Result", options=["1", "0.5", "0"], default="0.5")
+        "Opponent Rating": st.column_config.NumberColumn("opponent_rating", min_value=800, max_value=3000, step=1),
+        "Result": st.column_config.SelectboxColumn("result", options=["1", "0.5", "0"], default="0.5")
     },
     hide_index=False
 )
