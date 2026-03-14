@@ -154,50 +154,22 @@ with st.expander("Add Game", expanded=True):
             st.rerun()
 
 # === CSV IMPORT ===
-# === CSV IMPORT — Auto-clear uploader, no "X" needed ===
 st.download_button("Download CSV Template", data="opponent_rating,result\n1800,0.5\n1800,0.5\n", file_name="fide_template.csv", mime="text/csv")
 
-# Use a key to force re-render after clear
-uploaded = st.file_uploader(
-    "Upload CSV (will replace current games)",
-    type=["csv"],
-    accept_multiple_files=False,
-    key=f"uploader_{st.session_state.get('upload_key', 0)}"
-)
-
-if uploaded is not None:
+uploaded = st.file_uploader("Upload CSV (will replace current games)", type=["csv"])
+if uploaded:
     try:
         df = pd.read_csv(uploaded)
-        df.columns = [col.strip().lower().replace(" ", "_") for col in df.columns]
-        
-        if {"opponent_rating", "result"}.issubset(df.columns):
-            df["opponent_rating"] = pd.to_numeric(df["opponent_rating"], errors='coerce')
-            df = df.dropna(subset=["opponent_rating"])
-            df["opponent_rating"] = df["opponent_rating"].astype(int)
-            df["result"] = df["result"].astype(str).str.strip()
-            
-            # Update games
-            st.session_state.games = pd.DataFrame({
-                "Opponent Rating": df["opponent_rating"],
-                "Result": df["result"]
-            }).reset_index(drop=True)
-            
-            # Clear the uploader widget
-            st.session_state.uploaded_file = None
-            st.session_state.upload_key = st.session_state.get("upload_key", 0) + 1
-            
-            # Show non-blocking success message
-            st.toast(f"Imported {len(df)} games successfully!", icon="✅")
-            
-            # Force refresh so table updates
-            st.rerun()
+        if {"opponent_rating", "result"}.issubset(set(df.columns.str.lower())):
+            df = df.rename(columns=str.lower)
+            df["Opponent Rating"] = df["opponent_rating"].astype(int)
+            df["Result"] = df["result"].astype(str)
+            st.session_state.games = df[["Opponent Rating", "Result"]].copy()
+            st.success(f"Imported {len(df)} games!")
         else:
-            st.error("CSV must have columns: opponent_rating and result as headings")
+            st.error("CSV must have: opponent_rating, result")
     except Exception as e:
-        st.error(f"Error reading CSV: {e}")
-
-
-
+        st.error(f"Error: {e}")
 st.markdown(
     "<small style='color: #888;'>Tip: If the file is grayed out after download, rename it to remove spaces/parentheses (e.g. my_fide_games1.csv)</small>",
     unsafe_allow_html=True
