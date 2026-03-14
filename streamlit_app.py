@@ -1,4 +1,4 @@
-# app.py — FIDE Initial Rating Calculator — Rating & Description Under Heading
+# app.py — FIDE Initial Rating Calculator — FIXED & STABLE
 
 import streamlit as st
 import pandas as pd
@@ -23,7 +23,7 @@ except ImportError:
     from reportlab.lib import colors
     from reportlab.lib.units import inch
 
-# ====================== FIDE dp TABLE ======================
+# ====================== FIDE LOGIC ======================
 def fide_dp_table():
     return {1.00:800,0.99:677,0.98:589,0.97:538,0.96:501,0.95:470,0.94:444,0.93:422,0.92:401,0.91:383,
             0.90:366,0.89:351,0.88:336,0.87:322,0.86:309,0.85:296,0.84:284,0.83:273,0.82:262,0.81:251,
@@ -45,7 +45,6 @@ def get_dp(p):
             return table[threshold]
     return -800
 
-# ====================== CALCULATION ======================
 def calculate_rating(opponents, results):
     if len(opponents) < 5:
         return None
@@ -64,7 +63,6 @@ def calculate_rating(opponents, results):
         "score": score, "games": games, "perc": round(perc*100,1), "dp": dp
     }
 
-# ====================== PDF GENERATOR ======================
 def generate_pdf(data, name):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=1.5*inch)
@@ -100,16 +98,28 @@ st.set_page_config(page_title="FIDE Rating Pro", page_icon="Trophy", layout="cen
 
 st.markdown("<h1 style='text-align: center; color: #003087;'>FIDE Initial Rating Calculator</h1>", unsafe_allow_html=True)
 
-# === RATING UNDER HEADING ===
-rating_result = calculate_rating(
-    st.session_state.games["Opponent Rating"].tolist(),
-    st.session_state.games["Result"].tolist()
-) if "games" in st.session_state else None
+# Initialize games if not present
+if "games" not in st.session_state:
+    default_games = pd.DataFrame([
+        {"Opponent Rating": 1800, "Result": "0.5"},
+        {"Opponent Rating": 1800, "Result": "0.5"}
+    ])
+    st.session_state.games = default_games.copy()
 
-if rating_result:
+# === CALCULATE RATING ONLY FROM REAL GAMES ===
+real_games = st.session_state.games.iloc[2:] if len(st.session_state.games) > 2 else st.session_state.games.iloc[0:0]
+
+rating_result = calculate_rating(
+    real_games["Opponent Rating"].tolist(),
+    real_games["Result"].tolist()
+) if not real_games.empty else None
+
+if rating_result and len(real_games) >= 5:
     st.markdown(f"<h2 style='text-align: center; color: #003087;'>Your First FIDE Rating: <b>{rating_result['rating']}</b></h2>", unsafe_allow_html=True)
 else:
     st.markdown("<h2 style='text-align: center; color: #888;'>Your First FIDE Rating: <i>Not yet available (need 5+ real games)</i></h2>", unsafe_allow_html=True)
+
+st.markdown("---")
 
 # === EXPLANATORY PARAGRAPH ===
 st.markdown("""
@@ -121,20 +131,11 @@ so games in FIDE tournaments where you have earned 0 points should not be added.
 If you have lost your FIDE rating (gone below 1400), then you have to start again from the beginning and would need a minimum of 5 games again with at least 0.5 points to get a rating
 <br>
 <br>
-Use the "Add Game" box below to add any games played against FIDE opponents.    <a href="https://ratings.fide.com/">Fide Ratings Site</a>
+Use the "Add Game" box below to add any games played against FIDE opponents.   
+<br> Can get your older games from the FIDE site  <a href="https://ratings.fide.com/">Fide Ratings Site</a>  
+Put in your name and search and when your find your name,  Go to "Calculations" and go each month played and "View"
 </p>
 """, unsafe_allow_html=True)
-
-st.markdown("---")
-
-# === DEFAULT GAMES ===
-default_games = pd.DataFrame([
-    {"Opponent Rating": 1800, "Result": "0.5"},
-    {"Opponent Rating": 1800, "Result": "0.5"}
-])
-
-if "games" not in st.session_state:
-    st.session_state.games = default_games.copy()
 
 # === QUICK ADD GAME ===
 with st.expander("Add Game", expanded=True):
@@ -164,6 +165,7 @@ if uploaded:
             df["Result"] = df["result"].astype(str)
             st.session_state.games = df[["Opponent Rating", "Result"]].copy()
             st.success(f"Imported {len(df)} games!")
+            st.rerun()
         else:
             st.error("CSV must have: opponent_rating, result")
     except Exception as e:
@@ -176,8 +178,8 @@ edited = st.data_editor(
     num_rows="dynamic",
     use_container_width=True,
     column_config={
-        "Opponent Rating": st.column_config.NumberColumn("opponent_rating", min_value=800, max_value=3000, step=1),
-        "Result": st.column_config.SelectboxColumn("result", options=["1", "0.5", "0"], default="0.5")
+        "Opponent Rating": st.column_config.NumberColumn("Opponent Rating", min_value=800, max_value=3000, step=1),
+        "Result": st.column_config.SelectboxColumn("Result", options=["1", "0.5", "0"], default="0.5")
     },
     hide_index=False
 )
@@ -196,7 +198,7 @@ with col2:
     st.download_button("Export CSV", csv, "my_fide_games.csv", "text/csv")
 
 # === DETAILED RATING ===
-if rating_result:
+if rating_result and len(real_games) >= 5:
     c1, c2, c3 = st.columns(3)
     c1.metric("Games", rating_result['games'])
     c2.metric("Score %", f"{rating_result['perc']}%")
@@ -211,6 +213,6 @@ if rating_result:
         st.markdown(href, unsafe_allow_html=True)
         st.balloons()
 else:
-    st.info(f"Need 5+ real games against FIDE rated opponents to calculate rating • You have {len(st.session_state.games)-2}")
+    st.info(f"Need 5+ real games against FIDE rated opponents to calculate rating • You have {len(real_games)} real games")
 
 st.caption("Starts with 2 default games • Edit freely • 100% free")
