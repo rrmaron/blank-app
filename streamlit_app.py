@@ -189,8 +189,7 @@ st.markdown("""
 To calculate the initial rating, it starts with 2 draws against fictional opponents that have a 1800 rating — these are prefilled below.<br>
 Then we need 5 more results against FIDE-rated opponents to get your first official rating. <br>
 If you score 0 points in your first tournament, your results are disregarded and do not count toward your initial rating. <br>
-Only start entering results from a tournament in which you have at least drawn against a FIDE rated opponent,
-so games in FIDE tournaments where you have earned 0 points should not be added. <br>
+Only start entering results from a tournament in which you have at least drawn against a FIDE rated opponent <br>
 If you have lost your FIDE rating (gone below 1400), then you have to start again from the beginning and would need a minimum of 5 games again with at least 0.5 points to get a rating
 <br>
 <br>
