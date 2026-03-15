@@ -5,6 +5,7 @@ import pandas as pd
 from datetime import datetime
 from io import BytesIO
 import base64
+import csv
 
 # Auto-install reportlab
 try:
