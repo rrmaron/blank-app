@@ -247,9 +247,22 @@ with col1:
         st.rerun()
 with col2:
     export_df = st.session_state.games.copy()
-    export_df["Result"] = export_df["Result"].astype(str)
+    export_df = export_df.rename(columns={
+        "Opponent Rating": "opponent_rating",
+        "Result": "result"
+    })
     
-    csv = export_df.to_csv(index=False)
+    export_df["Result"] = export_df["Result"].astype(str).replace({
+        "0": "0",       # explicit string "0"
+        "0.0": "0",
+        "0.5": "0.5",
+        "1": "1",
+        "1.0": "1"
+    })
+
+
+    
+    csv = export_df.to_csv(index=False, quoting=csv.QUOTE_NONNUMERIC)
     st.download_button("Export CSV", csv, "my_fide_games.csv", "text/csv", help="Downloads your current games - Result column preserved as text")
 
 
