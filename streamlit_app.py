@@ -250,7 +250,7 @@ with col2:
     export_df["Result"] = export_df["Result"].astype(str)
     
     csv = export_df.to_csv(index=False)
-    st.download_button("Export CSV", csv, "my_fide_games.csv", "text/csv")
+    st.download_button("Export CSV", csv, "my_fide_games.csv", "text/csv", help="Downloads your current games - Result column preserved as text")
 
 
     
