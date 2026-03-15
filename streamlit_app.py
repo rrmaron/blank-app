@@ -68,7 +68,29 @@ def calculate_rating(opponents, results):
 
     games = len(opponents_clean)
     avg = sum(opponents_clean) // games
-    score = sum(1 if r in ["1", "1.0"] else 0.5 if r in ["0.5", "0,5", "="] else 0 for r in results_clean)
+
+    # Handle results as numeric (float/int) or string
+    score = 0.0
+    for r in results:
+        try:
+            r_val = float(r)  # convert to float safely
+            if r_val == 1.0 or r_val == 1:
+                score += 1
+            elif r_val == 0.5:
+                score += 0.5
+            # ignore anything else (invalid or loss = 0)
+        except (ValueError, TypeError):
+            # If not numeric, try string match (for "0,5", "=", etc.)
+            r_str = str(r).strip()
+            if r_str in ["1", "1.0"]:
+                score += 1
+            elif r_str in ["0.5", "0,5", "="]:
+                score += 0.5
+            # else: loss or invalid → +0
+
+    
+    #score = sum(1 if r in ["1", "1.0"] else 0.5 if r in ["0.5", "0,5", "="] else 0 for r in results_clean)
+    
     perc = score / games
     dp = get_dp(perc)
     Rp = avg + dp
