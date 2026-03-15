@@ -47,60 +47,70 @@ def get_dp(p):
     return -800
 
 # ====================== CALCULATION ======================
+
 def calculate_rating(opponents, results):
-    # Filter out invalid rows (None, NaN, empty)
-    valid_pairs = []
+    """
+    Calculate FIDE initial rating from list of opponent ratings and results.
+    Handles both numeric and string results from CSV/editable table.
+    Ignores invalid rows.
+    """
+    # Filter valid pairs
+    valid_opponents = []
+    valid_results = []
+
     for opp, res in zip(opponents, results):
-        if opp is not None and pd.notna(opp) and res is not None and pd.notna(res):
-            try:
-                opp_val = int(float(opp))  # safe conversion
-                res_str = str(res).strip()
-                if res_str in ["1", "1.0", "0.5", "0", "0,5", "="]:
-                    valid_pairs.append((opp_val, res_str))
-            except (ValueError, TypeError):
-                pass  # skip invalid
+        # Skip invalid opponent rating
+        try:
+            opp_val = float(opp)
+            if pd.isna(opp_val) or not opp_val.is_integer() or opp_val < 800 or opp_val > 3000:
+                continue
+            opp_val = int(opp_val)
+        except (ValueError, TypeError):
+            continue
 
-    opponents_clean = [opp for opp, _ in valid_pairs]
-    results_clean = [res for _, res in valid_pairs]
+        # Handle result (numeric or string)
+        try:
+            res_val = float(res)
+            if pd.isna(res_val):
+                continue
+            if res_val == 1.0 or res_val == 1:
+                score_add = 1.0
+            elif res_val == 0.5:
+                score_add = 0.5
+            else:
+                score_add = 0.0  # loss or other
+        except (ValueError, TypeError):
+            # Fallback to string
+            res_str = str(res).strip().lower()
+            if res_str in ["1", "1.0", "win"]:
+                score_add = 1.0
+            elif res_str in ["0.5", "0,5", "½", "draw", "="]:
+                score_add = 0.5
+            else:
+                score_add = 0.0  # loss, invalid, or "0"
 
-    if len(opponents_clean) < 5:
+        valid_opponents.append(opp_val)
+        valid_results.append(score_add)
+
+    # If not enough valid games
+    if len(valid_opponents) < 5:
         return None
 
-    games = len(opponents_clean)
-    avg = sum(opponents_clean) // games
-
-    # Handle results as numeric (float/int) or string
-    score = 0.0
-    for r in results:
-        try:
-            r_val = float(r)  # convert to float safely
-            if r_val == 1.0 or r_val == 1:
-                score += 1
-            elif r_val == 0.5:
-                score += 0.5
-            # ignore anything else (invalid or loss = 0)
-        except (ValueError, TypeError):
-            # If not numeric, try string match (for "0,5", "=", etc.)
-            r_str = str(r).strip()
-            if r_str in ["1", "1.0"]:
-                score += 1
-            elif r_str in ["0.5", "0,5", "="]:
-                score += 0.5
-            # else: loss or invalid → +0
-
-    
-    #score = sum(1 if r in ["1", "1.0"] else 0.5 if r in ["0.5", "0,5", "="] else 0 for r in results_clean)
-    
+    games = len(valid_opponents)
+    avg = sum(valid_opponents) // games
+    score = sum(valid_results)
     perc = score / games
     dp = get_dp(perc)
     Rp = avg + dp
     rating = max(Rp, 1000)
+
     if avg >= 2000 and perc >= 0.50:
         rating = max(rating, 1600)
     if Rp >= 2250:
         rating = max(rating, 1800)
     if Rp >= 2400:
         rating = max(rating, 2000)
+
     return {
         "rating": round(rating),
         "Rp": round(Rp),
@@ -110,6 +120,8 @@ def calculate_rating(opponents, results):
         "perc": round(perc * 100, 1),
         "dp": dp
     }
+
+
 
 # ====================== PDF GENERATOR ======================
 def generate_pdf(data, name):
