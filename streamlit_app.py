@@ -252,7 +252,7 @@ with col2:
         "Result": "result"
     })
     
-    export_df["Result"] = export_df["Result"].astype(str).replace({
+    export_df["result"] = export_df["result"].astype(str).replace({
         "0": "0",       # explicit string "0"
         "0.0": "0",
         "0.5": "0.5",
@@ -263,6 +263,7 @@ with col2:
 
     
     csv = export_df.to_csv(index=False, quoting=csv.QUOTE_NONNUMERIC)
+    
     st.download_button("Export CSV", csv, "my_fide_games.csv", "text/csv", help="Downloads your current games - Result column preserved as text")
 
 
