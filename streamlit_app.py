@@ -192,6 +192,15 @@ If you score 0 points in your first tournament, your results are disregarded and
 Only start entering results from a tournament in which you have at least drawn against a FIDE rated opponent <br>
 If you have lost your FIDE rating (gone below 1400), then you have to start again from the beginning and would need a minimum of 5 games again with at least 0.5 points to get a rating
 <br>
+FIDE Rating Regulations, effective March 1, 2024 - https://handbook.fide.com/chapter/B022024 <br>
+The relevant points for unrated players are as follows: <br>
+<br>
+6.1 Matches in which one player is unrated shall not be rated. <br>
+
+7.1.4 A rating for a player new to the list shall be published when it is based on at least 5 games against rated opponents. This need not be met in one tournament. Results from other tournaments played within consecutive rating periods of not more than 26 months are pooled to obtain the initial rating. The rating must be at least 1400.
+<br>
+8.2.1 If an unrated player scores zero in their first event this score is disregarded. Otherwise, their rating is calculated using all their results as in 7.1.4.
+<br>
 <br>
 Use the "Add Game" box below to add any games played against FIDE opponents.   
 <br> Can get your older games from the FIDE site  <a href="https://ratings.fide.com/">Fide Ratings Site</a>  
