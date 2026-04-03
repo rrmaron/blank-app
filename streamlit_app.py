@@ -198,7 +198,8 @@ Use the "Add Game" box below to add any games played against FIDE opponents.
 Put in your name and search and when your find your name,  Go to "Calculations" and go each month played and "View"
 </p><br>
 Please note that FIDE ratings will only show up on or after the first of the month, so if you earned your FIDE rating in early March, it will only show up as an official FIDE rating on or after April 1st.  FIDE uses a calendar month period and does not give out ratings after every tournament. 
-<br> Link to the official FIDE calculator <a href="https://ratings.fide.com/calc.phtml?page=change">Fide Calculators</a>
+<br> Link to the official FIDE calculator <a href="https://ratings.fide.com/calc.phtml?page=change">Fide Calculators</a> <br>
+Once you have a FIDE rating, then use the official <a href="https://ratings.fide.com/calc.phtml?page=change">Fide Calculator - Rating Change in white</a> to see how your rating will change depending on your opponents rating and the result (win, lose or draw),  
 """, unsafe_allow_html=True)
 
 st.markdown("---")
