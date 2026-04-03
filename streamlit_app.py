@@ -149,7 +149,15 @@ def generate_pdf(data, name):
     ]))
     story.append(t)
     story.append(Spacer(1, 60))
-    story.append(Paragraph("Per FIDE Rating Regulations 2025", ParagraphStyle('Footer', alignment=1, fontSize=14, textColor="#555")))
+    story.append(Paragraph("Per FIDE Rating Regulations effective March 1, 2024: FIDE Rating Regulations, effective March 1, 2024 - https://handbook.fide.com/chapter/B022024
+
+The relevant points for unrated players are as follows:
+
+6.1 Matches in which one player is unrated shall not be rated.
+
+7.1.4 A rating for a player new to the list shall be published when it is based on at least 5 games against rated opponents. This need not be met in one tournament. Results from other tournaments played within consecutive rating periods of not more than 26 months are pooled to obtain the initial rating. The rating must be at least 1400.
+
+8.2.1 If an unrated player scores zero in their first event this score is disregarded. Otherwise, their rating is calculated using all their results as in 7.1.4.", ParagraphStyle('Footer', alignment=1, fontSize=14, textColor="#555")))
     doc.build(story)
     buffer.seek(0)
     return buffer
