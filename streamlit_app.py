@@ -308,8 +308,7 @@ with col2:
     
 # === DETAILED RATING (only if 5+ real games) ===
 if rating_result and len(real_games) >= 5:
-    st.write(f"Performance/Initial Rating: {rating_result['Rp']} = Average opponent rating + dp (dp is usually negative,
-    so subtracted) = {rating_result['avg']} + {rating_result['dp']:-}.  The official FIDE calculation includes the 2 imaginary draws against 1800 rated opponents, so that's why number of games is shown as 2 higher than the real number played ")
+    st.write(f"Performance/Initial Rating: {rating_result['Rp']} = Average opponent rating + dp (dp is usually negative,so subtracted) = {rating_result['avg']} + {rating_result['dp']:-}.  The official FIDE calculation includes the 2 imaginary draws against 1800 rated opponents, so that's why number of games is shown as 2 higher than the real number played ")
     c1, c2, c3 = st.columns(3)
     c1.metric("Games", rating_result['games'])
     c2.metric("Score %", f"{rating_result['perc']}%")
