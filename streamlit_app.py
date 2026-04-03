@@ -256,7 +256,7 @@ if uploaded is not None:
         st.error(f"Error: {e}")
 
 # === EDITABLE TABLE ===
-st.subheader(f"Your Real Games ({len(st.session_state.games)-2})")
+st.subheader(f"Your Real Games ({len(st.session_state.games)-2}) Please don't delete the 2 games with draws for 1800 players as that is part of the FIDE calculation")
 edited = st.data_editor(
     st.session_state.games,
     num_rows="dynamic",
