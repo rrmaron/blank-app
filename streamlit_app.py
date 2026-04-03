@@ -96,9 +96,9 @@ def calculate_rating(opponents, results):
     if len(valid_opponents) < 5:
         return None
 
-    games = len(valid_opponents)
-    avg = sum(valid_opponents) // games
-    score = sum(valid_results)
+    games = len(valid_opponents) + 2
+    avg = (sum(valid_opponents) + 3600) // games
+    score = sum(valid_results) + 1
     perc = score / games
     dp = get_dp(perc)
     Rp = avg + dp
