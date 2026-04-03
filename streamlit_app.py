@@ -150,7 +150,6 @@ def generate_pdf(data, name):
     story.append(t)
     story.append(Spacer(1, 60))
     story.append(Paragraph("Per FIDE Rating Regulations effective March 1, 2024", ParagraphStyle('Footer', alignment=1, fontSize=14, textColor="#555")))
-    ParagraphStyle('Footer', alignment=1, fontSize=14, textColor="#555")))
     doc.build(story)
     buffer.seek(0)
     return buffer
