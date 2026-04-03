@@ -336,3 +336,5 @@ else:
     st.info(f"Need 5+ real games against FIDE rated opponents to calculate rating • You have {len(real_games)} real games")
 
 st.caption("Starts with 2 default games • Edit freely • 100% free")
+
+st.caption("FIDE K-Factor Rules (Effective March 2024):K=40: Players new to the rating list until they complete 30 games.K=40: Players under 18 years old until their rating reaches 2300.K=20: Players with a rating below 2400.K=10: Players whose published rating reaches 2400 or higher, even if it later falls below that level.Special Note: For rapid and blitz, a K-factor of 20 is generally used")
